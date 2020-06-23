@@ -808,162 +808,184 @@ public class PlayerGUI extends JPanel implements GuiSubject
         {
             Object source = e.getSource();
             System.out.println(NAME+" {MouseListener} Source is "+((JLabel)source).getName());
-            if(source == shuffle)
-            {
-                if(shuffle_Select)
-                {
-                    shuffle.setIcon(SHUFFLE_ICON_DE_SELECT);
-                    shuffle_Select = false;
-                    notifyAllObservers(PlayState.SHUFFLE_TOGGLED);
-                    revalidate();
-                }
-                else
-                {
-                    shuffle.setIcon(SHUFFLE_ICON_SELECTED);
-                    shuffle_Select = true;
-                    notifyAllObservers(PlayState.SHUFFLE_TOGGLED);
-                    revalidate();
-                }
-                
+            if(source == shuffle) {
+				shuffleSelect();
             }
-            else if(source == repeat)
-            {
-                if(repeat_Select)
-                {
-                    repeat.setIcon(REPEAT_ICON_DE_SELECT);
-                    repeat_Select = false;
-                    notifyAllObservers(PlayState.REPEAT_TOGGLED);
-                    revalidate();
-                }
-                else
-                {
-                    repeat.setIcon(REPEAT_ICON_SELECTED);
-                    repeat_Select = true;
-                    notifyAllObservers(PlayState.REPEAT_TOGGLED);
-                    revalidate();
-                }
-                
-            }
+            else if(source == repeat) {
+				repeatSelect();
+			}
             
-            if (notStarted)
-            {
-                if (source == playPause) 
-                {
-                	currentStateOfPlayer = PlayState.PLAYING;
-                    notStarted = false;
-                    playPause.setIcon(PAUSE_ICON);
-                    revalidate();
-                    notifyAllObservers(currentStateOfPlayer);                    
-                    System.out.println(NAME+"Starting up Player!!");                   
-                }
-            }
-            else
-            {
-            	System.out.println(NAME+" User Skipped/Paused/Played: Current State: "+currentStateOfPlayer);
-                if (source == playPause && currentStateOfPlayer == PlayState.PAUSED)
-                {
-                	currentStateOfPlayer = PlayState.PLAYING;
-                    playPause.setIcon(PAUSE_ICON);
-                    songTimeUpdater.startTimer();
-                    revalidate();
-                    notifyAllObservers(currentStateOfPlayer);
-                    System.out.println(NAME+"User pressed Play!!");
-                }
-                else if (source == playPause && currentStateOfPlayer == PlayState.PLAYING)
-                {
-                	currentStateOfPlayer = PlayState.PAUSED;
-                    playPause.setIcon(PLAY_ICON);
-                    songTimeUpdater.stopTimer();
-                    revalidate();
-                    notifyAllObservers(currentStateOfPlayer);
-                    System.out.println(NAME+"User pressed Pause!!");
-                }
-                if (source == skip) {
-                	currentStateOfPlayer = PlayState.SKIPPED_FORWARDS;
-                	notifyAllObservers(currentStateOfPlayer);
-                	System.out.println(NAME+"User pressed skip!!");
-                	currentStateOfPlayer = PlayState.PLAYING;
-                }
-                System.out.println(NAME+" New State: "+currentStateOfPlayer);
-            }
+            if (notStarted) {
+				notStarted(source);
+			}
+            else {
+				started(source);
+			}
             
             if(source == menu)
             {
-            	int offset = 0;
-                if(menuBar.isVisible())
-                {
-                	//Disable the menubar and adjust the player
-                	//frame.setBounds(frame.getX(), frame.getY()+(menuBar.getHeight()), frame.getWidth(), frame.getHeight()-menu.getHeight());*/
-                	
-                	menuBar.setVisible(false);
-                	if(isMainPanel_InUse() && isCreaterPanelOpen())
-                	{
-                		setCurrentOpenPanel(null);
-                		isLibCreaterOpen = false;
-                	}
-                	frame.pack();                	
-                }
-                else
-                {
-                	menuBar.setVisible(true);
-                	frame.pack();
-                }
-            }
+				menuSource();
+			}
             else if(source == playList)
             {
-            	//System.out.println("<<< The GUI Panel >>>\nSize: "+getWidth()+" X "+getHeight());
-            	//System.out.println("<<< The playListWindow Panel >>>\nSize: "+playListWindow.getWidth()+" X "+playListWindow.getHeight());
-                
-            	if(playListWindow != null)
-            	{
-            		
-            		if(getCurrentOpenPanel()!=null)
-	                {
-            			if(getCurrentOpenPanel().getName().compareTo(playListWindow.getName())==0)
-            			{
-	            			System.out.println("The currentOpenPanel is: "+getCurrentOpenPanel().getName()+" | wanting to open : "+playListWindow.getName());
-		            		//remove(mainWindowPanel);
-	            			//mainWindowPanel.setVisible(false);
-		                	//frame.setLocation(frame.getX(), frame.getY()+playListWindow.getHeight());
-		                	//frame.setSize(frame.getWidth(), frame.getHeight()-playListWindow.getHeight());
-		            		setCurrentOpenPanel(null);
-            			}
-	                }
-	                else
-	                {
-	                	//frame.setLocation(frame.getX(), frame.getY()-playListWindow.getHeight());
-	                	//frame.setSize(new Dimension(frame.getWidth(), frame.getHeight()+playListWindow.getHeight()));
-	                	
-	                	if(!isMainPanel_InUse())
-	            		{
-	                		setCurrentOpenPanel(playListWindow);
-	            		}
-	                	else
-	                		setCurrentOpenPanel(playListWindow);               	
-	                }
-            		frame.pack();
-            	}
-            }
+				playListSource();
+			}
             if(source == exit)
             {
-            	if(!guiObserverList.isEmpty() || musicLibraryManager != null)
-            	{
-            		currentStateOfPlayer = PlayState.SHUTDOWN;
-            		notifyAllObservers(currentStateOfPlayer);
-            	}
-            	else
-            	{
-            		lightShutdown();
-            	}
-            	
-            }
+				exitSource();
+			}
             if(currentStateOfPlayer == PlayState.STOPPED && observersStopped)
             {
             	deregisterGuiObserver(musicLibraryManager);
             }
             
         }
-        public void mouseReleased(MouseEvent e){}
+
+		private void exitSource() {
+			if(!guiObserverList.isEmpty() || musicLibraryManager != null)
+			{
+				currentStateOfPlayer = PlayState.SHUTDOWN;
+				notifyAllObservers(currentStateOfPlayer);
+			}
+			else
+			{
+				lightShutdown();
+			}
+		}
+
+		private void playListSource() {
+			//System.out.println("<<< The GUI Panel >>>\nSize: "+getWidth()+" X "+getHeight());
+			//System.out.println("<<< The playListWindow Panel >>>\nSize: "+playListWindow.getWidth()+" X "+playListWindow.getHeight());
+
+			if(playListWindow != null)
+			{
+
+				if(getCurrentOpenPanel()!=null)
+				{
+					if(getCurrentOpenPanel().getName().compareTo(playListWindow.getName())==0)
+					{
+						System.out.println("The currentOpenPanel is: "+getCurrentOpenPanel().getName()+" | wanting to open : "+playListWindow.getName());
+						//remove(mainWindowPanel);
+						//mainWindowPanel.setVisible(false);
+						//frame.setLocation(frame.getX(), frame.getY()+playListWindow.getHeight());
+						//frame.setSize(frame.getWidth(), frame.getHeight()-playListWindow.getHeight());
+						setCurrentOpenPanel(null);
+					}
+				}
+				else
+				{
+					//frame.setLocation(frame.getX(), frame.getY()-playListWindow.getHeight());
+					//frame.setSize(new Dimension(frame.getWidth(), frame.getHeight()+playListWindow.getHeight()));
+
+					if(!isMainPanel_InUse())
+					{
+						setCurrentOpenPanel(playListWindow);
+					}
+					else
+						setCurrentOpenPanel(playListWindow);
+				}
+				frame.pack();
+			}
+		}
+
+		private void menuSource() {
+			int offset = 0;
+			if(menuBar.isVisible())
+			{
+				//Disable the menubar and adjust the player
+				//frame.setBounds(frame.getX(), frame.getY()+(menuBar.getHeight()), frame.getWidth(), frame.getHeight()-menu.getHeight());*/
+
+				menuBar.setVisible(false);
+				if(isMainPanel_InUse() && isCreaterPanelOpen())
+				{
+					setCurrentOpenPanel(null);
+					isLibCreaterOpen = false;
+				}
+				frame.pack();
+			}
+			else
+			{
+				menuBar.setVisible(true);
+				frame.pack();
+			}
+		}
+
+		private void started(Object source) {
+			System.out.println(NAME+" User Skipped/Paused/Played: Current State: "+currentStateOfPlayer);
+			if (source == playPause && currentStateOfPlayer == PlayState.PAUSED)
+			{
+				currentStateOfPlayer = PlayState.PLAYING;
+				playPause.setIcon(PAUSE_ICON);
+				songTimeUpdater.startTimer();
+				revalidate();
+				notifyAllObservers(currentStateOfPlayer);
+				System.out.println(NAME+"User pressed Play!!");
+			}
+			else if (source == playPause && currentStateOfPlayer == PlayState.PLAYING)
+			{
+				currentStateOfPlayer = PlayState.PAUSED;
+				playPause.setIcon(PLAY_ICON);
+				songTimeUpdater.stopTimer();
+				revalidate();
+				notifyAllObservers(currentStateOfPlayer);
+				System.out.println(NAME+"User pressed Pause!!");
+			}
+			if (source == skip) {
+				currentStateOfPlayer = PlayState.SKIPPED_FORWARDS;
+				notifyAllObservers(currentStateOfPlayer);
+				System.out.println(NAME+"User pressed skip!!");
+				currentStateOfPlayer = PlayState.PLAYING;
+			}
+			System.out.println(NAME+" New State: "+currentStateOfPlayer);
+		}
+
+		private void notStarted(Object source) {
+			if (source == playPause)
+			{
+				currentStateOfPlayer = PlayState.PLAYING;
+				notStarted = false;
+				playPause.setIcon(PAUSE_ICON);
+				revalidate();
+				notifyAllObservers(currentStateOfPlayer);
+				System.out.println(NAME+"Starting up Player!!");
+			}
+		}
+
+		private void repeatSelect() {
+			if(repeat_Select)
+			{
+				repeat.setIcon(REPEAT_ICON_DE_SELECT);
+				repeat_Select = false;
+				notifyAllObservers(PlayState.REPEAT_TOGGLED);
+				revalidate();
+			}
+			else
+			{
+				repeat.setIcon(REPEAT_ICON_SELECTED);
+				repeat_Select = true;
+				notifyAllObservers(PlayState.REPEAT_TOGGLED);
+				revalidate();
+			}
+		}
+
+		private void shuffleSelect() {
+			if(shuffle_Select)
+			{
+				shuffle.setIcon(SHUFFLE_ICON_DE_SELECT);
+				shuffle_Select = false;
+				notifyAllObservers(PlayState.SHUFFLE_TOGGLED);
+				revalidate();
+			}
+			else
+			{
+				shuffle.setIcon(SHUFFLE_ICON_SELECTED);
+				shuffle_Select = true;
+				notifyAllObservers(PlayState.SHUFFLE_TOGGLED);
+				revalidate();
+			}
+		}
+
+		public void mouseReleased(MouseEvent e){}
         public void mouseEntered(MouseEvent e){}
         public void mouseExited(MouseEvent e){}
 
